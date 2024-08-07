@@ -33,7 +33,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Slf4j
 @RequiredArgsConstructor
 @Controller
-@RequestMapping("/chatrooms")
+@RequestMapping("/v1/chatrooms")
 public class ChatRoomController {
 
     private final ChatService chatService;

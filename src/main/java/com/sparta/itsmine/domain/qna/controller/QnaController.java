@@ -33,7 +33,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/products/{productId}/qnas")
+@RequestMapping("/v1/products/{productId}/qnas")
 public class QnaController {
 
     private final QnaService qnaService;

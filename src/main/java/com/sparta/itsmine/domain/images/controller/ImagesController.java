@@ -19,7 +19,7 @@ import static com.sparta.itsmine.global.common.response.ResponseExceptionEnum.US
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/s3")
+@RequestMapping("/v1/s3")
 public class ImagesController {
 
     private final ImagesService imagesService;

@@ -10,6 +10,7 @@ import org.springframework.jms.core.JmsTemplate;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Controller;
 
 import java.util.concurrent.BlockingQueue;
@@ -69,43 +70,42 @@ public class ChatController {
             processMessages();
         } catch (InterruptedException e) {
             log.error("Failed to add message to queue", e);
-            Thread.currentThread().interrupt();
+                Thread.currentThread().interrupt();
         }
     }
 
     /**
      * 메시지를 큐에서 가져와 ActiveMQ로 전송하고, WebSocket 클라이언트로 전달합니다.
      */
-    private void processMessages() {
+    @Async("messageExecutor")
+    protected void processMessages() {
         // 새로운 스레드에서 메시지를 처리하여 비동기로 수행
-        new Thread(() -> {
-            while (!messageQueue.isEmpty()) {
-                try {
-                    MessageRequestDto requestDto = messageQueue.poll(2, TimeUnit.SECONDS); // 큐에서 메시지를 가져옴
+        while (!messageQueue.isEmpty()) {
+            try {
+                MessageRequestDto requestDto = messageQueue.poll(2, TimeUnit.SECONDS); // 큐에서 메시지를 가져옴
 
-                    if (requestDto != null) {
-                        log.info("Processing message: {}", requestDto.getMessage());
+                if (requestDto != null) {
+                    log.info("Processing message: {}", requestDto.getMessage());
 
-                        // 중복 메시지 여부 확인
-                        if (processedMessages.putIfAbsent(requestDto.getMessageId(), true) != null) {
-                            log.warn("Duplicate message detected during processing, ignoring: {}", requestDto.getMessageId());
-                            continue;
-                        }
-
-                        // 메시지를 ActiveMQ로 전송
-                        jmsTemplate.convertAndSend(queue, requestDto);
-
-                        // WebSocket 클라이언트에게 메시지 전송
-                        messagingTemplate.convertAndSend("/topic/chat.message/" + requestDto.getRoomId(), requestDto);
-
-                        // 메시지를 데이터베이스에 저장하는 서비스 호출
-                        chatService.saveMessage(requestDto);
+                    // 중복 메시지 여부 확인
+                    if (processedMessages.putIfAbsent(requestDto.getMessageId(), true) != null) {
+                        log.warn("Duplicate message detected during processing, ignoring: {}", requestDto.getMessageId());
+                        continue;
                     }
-                } catch (Exception e) {
-                    log.error("Failed to process message", e);
+
+                    // 메시지를 ActiveMQ로 전송
+                    jmsTemplate.convertAndSend(queue, requestDto);
+
+                    // WebSocket 클라이언트에게 메시지 전송
+                    messagingTemplate.convertAndSend("/topic/chat.message/" + requestDto.getRoomId(), requestDto);
+                    // 메시지를 데이터베이스에 저장하는 서비스 호출
+
+                    chatService.saveMessage(requestDto);
                 }
+            } catch (Exception e) {
+                log.error("Failed to process message", e);
             }
-        }).start();
+        }
     }
 
     /**

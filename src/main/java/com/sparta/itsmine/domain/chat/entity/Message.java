@@ -25,7 +25,7 @@ public class Message {
         this.roomId = requestDto.getRoomId();
         this.fromUserId = requestDto.getFromUserId();
         this.message = requestDto.getMessage();
-        this.time = requestDto.getTime();
+        this.time = requestDto.getTime ();
     }
 
     @DynamoDbPartitionKey

@@ -16,7 +16,7 @@ import static com.sparta.itsmine.global.common.response.ResponseCodeEnum.*;
 import static com.sparta.itsmine.global.common.response.ResponseUtils.of;
 
 @RestController
-@RequestMapping("/qnas/{qnaId}/comments")
+@RequestMapping("/v1/qnas/{qnaId}/comments")
 @RequiredArgsConstructor
 public class CommentController {
 
