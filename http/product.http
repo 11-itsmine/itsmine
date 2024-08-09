@@ -3,10 +3,10 @@ POST http://localhost:8080/v1/users
 Content-Type: application/json
 
 {
-  "username":"{{username}}",
-  "password":"{{password}}",
-  "name":"{{name}}",
-  "email":"{{email}}",
+  "username":"qweqwe",
+  "password":"qweqwe",
+  "name":"qweqwe",
+  "email":"qweqwe",
   "address": "화성시",
   "nickname": "Jack21"
 }
@@ -17,8 +17,8 @@ POST http://localhost:8080/v1/users/login
 Content-Type: application/json
 
 {
-  "username":"{{username}}",
-  "password":"{{password}}"
+  "username":"qweqwe",
+  "password":"qweqwe"
 }
 > {%
   client.log(response.headers.valueOf("Authorization"));
@@ -39,7 +39,7 @@ Content-Type: application/json
 
 
 ### 상품 등록하기
-POST http://localhost:8080/products
+POST http://localhost:8080/v1/products
 Authorization: {{Authorization}}
 Content-Type: application/json
 

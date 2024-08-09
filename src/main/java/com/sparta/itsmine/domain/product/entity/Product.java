@@ -85,6 +85,7 @@ public class Product extends TimeStamp {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Auction> auction = new ArrayList<>();
 
+    private int likeCount;
 
     /**
      * 생성자 - 약속된 형태로만 생성가능하도록 합니다.
@@ -100,6 +101,7 @@ public class Product extends TimeStamp {
         this.auctionNowPrice = auctionNowPrice;
         this.dueDate = dueDate;
         this.category = category;
+        this.likeCount = 0;
 
         // set up initialized values
         this.status = BID;
@@ -164,5 +166,9 @@ public class Product extends TimeStamp {
             return imagesList.get(0).getImagesUrl();
         }
         return null; // or a default image URL
+    }
+
+    public void countUpdate(int count) {
+        this.likeCount = this.likeCount + count;
     }
 }

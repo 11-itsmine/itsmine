@@ -1,7 +1,6 @@
 package com.sparta.itsmine.domain.auction.service;
 
 import static com.sparta.itsmine.domain.product.utils.ProductStatus.SUCCESS_BID;
-import static com.sparta.itsmine.global.common.response.ResponseExceptionEnum.AUCTION_DENIED_BID;
 
 import com.sparta.itsmine.domain.auction.dto.AuctionProductResponseDto;
 import com.sparta.itsmine.domain.auction.dto.AuctionRequestDto;
@@ -14,7 +13,7 @@ import com.sparta.itsmine.domain.product.repository.ProductAdapter;
 import com.sparta.itsmine.domain.product.repository.ProductRepository;
 import com.sparta.itsmine.domain.product.scheduler.MessageSenderService;
 import com.sparta.itsmine.domain.user.entity.User;
-import com.sparta.itsmine.global.exception.DataDuplicatedException;
+import com.sparta.itsmine.global.lock.DistributedLock;
 
 import jakarta.transaction.Transactional;
 
@@ -40,44 +39,29 @@ public class AuctionService {
 	private final ProductRepository productRepository;
 	private final AuctionAdapter adapter;
 	private final ProductAdapter productAdapter;
-	private final RedissonClient redissonClient;
-	private static final String LOCK_KEY = "auctionLock";
+	private final String LOCK_KEY_PREFIX = "auctionLock";
 
+	@DistributedLock(prefix = LOCK_KEY_PREFIX, key = "productId")
 	public AuctionResponseDto createAuction(User user, Long productId,
 		AuctionRequestDto requestDto) {
-		RLock lock = redissonClient.getFairLock(LOCK_KEY);
-		Auction auction = null;
-		try {
-			boolean isLocked = lock.tryLock(10, TimeUnit.SECONDS);
-			if (!isLocked) {
-				throw new IllegalArgumentException("입찰 생성 대기시간 초과");
-			}
 
-			try {
-				Product product = productAdapter.getProduct(productId);
-				Integer bidPrice = requestDto.getBidPrice();
+		Product product = productAdapter.getProduct(productId);
+		Integer bidPrice = requestDto.getBidPrice();
 
-				auction = createAuctionEntity(user, product, bidPrice);
+		Auction auction = createAuctionEntity(user, product, bidPrice);
 
-				checkAuctionValidity(auction, product, bidPrice, user);
+		checkAuctionValidity(auction, product, bidPrice, user);
 
-				currentPriceUpdate(bidPrice, product);
-				auctionRepository.save(auction);
+		currentPriceUpdate(bidPrice, product);
+		auctionRepository.save(auction);
 
-				if (bidPrice.equals(product.getAuctionNowPrice())) {
-					successfulAuction(productId);
-					auction.updateStatus(SUCCESS_BID);
-					auctionRepository.save(auction);
-				} else {
-					scheduleMessage(productId, product.getDueDate());
-				}
-			} finally {
-				lock.unlock();
-			}
-		} catch (
-			InterruptedException e) {
-			Thread.currentThread().interrupt();
+		if (bidPrice.equals(product.getAuctionNowPrice())) {
+			successfulAuction(productId);
+			auction.updateStatus(SUCCESS_BID);
+		auctionRepository.save(auction);} else {
+			scheduleMessage(productId, product.getDueDate());
 		}
+
 		return new AuctionResponseDto(auction);
 	}
 

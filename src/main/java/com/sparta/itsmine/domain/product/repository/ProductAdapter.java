@@ -16,6 +16,8 @@ import com.sparta.itsmine.global.exception.product.ProductInDateException;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
@@ -61,7 +63,6 @@ public class ProductAdapter {
                 .map(ProductResponseDto::new);
     }
     
-
     public Product getProduct(Long productId) {
         return productRepository.findActiveProductById(productId)
                 .orElseThrow(() -> new DataNotFoundException(PRODUCT_NOT_FOUND));
