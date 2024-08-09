@@ -7,6 +7,7 @@ import static com.sparta.itsmine.global.common.response.ResponseCodeEnum.USER_DE
 import static com.sparta.itsmine.global.common.response.ResponseCodeEnum.USER_RESIGN_SUCCESS;
 import static com.sparta.itsmine.global.common.response.ResponseCodeEnum.USER_SIGNUP_SUCCESS;
 import static com.sparta.itsmine.global.common.response.ResponseCodeEnum.USER_SUCCESS_GET;
+import static com.sparta.itsmine.global.common.response.ResponseCodeEnum.USER_SUCCESS_LIST;
 import static com.sparta.itsmine.global.common.response.ResponseCodeEnum.USER_UPDATE_SUCCESS;
 import static com.sparta.itsmine.global.common.response.ResponseUtils.of;
 
@@ -15,10 +16,17 @@ import com.sparta.itsmine.domain.social.kakao.service.KakaoService;
 import com.sparta.itsmine.domain.user.dto.ProfileUpdateRequestDto;
 import com.sparta.itsmine.domain.user.dto.SignupRequestDto;
 import com.sparta.itsmine.domain.user.dto.UserResponseDto;
+import com.sparta.itsmine.domain.user.dto.UserRoleDto;
+import com.sparta.itsmine.domain.user.entity.User;
 import com.sparta.itsmine.domain.user.service.UserService;
 import com.sparta.itsmine.global.common.response.HttpResponseDto;
+import com.sparta.itsmine.global.common.response.ResponseUtils;
 import com.sparta.itsmine.global.security.UserDetailsImpl;
+import jakarta.servlet.http.HttpServletResponse;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -36,6 +44,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/v1/users")
 public class UserController {
 
+    private static final Logger log = LoggerFactory.getLogger(UserController.class);
     private final UserService userService;
     private final KakaoService kakaoService;
 
@@ -49,7 +58,7 @@ public class UserController {
 
     @GetMapping("/logout")
     public ResponseEntity<HttpResponseDto> logout(
-        @AuthenticationPrincipal UserDetailsImpl userDetails
+            @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         userService.logout(userDetails.getUsername());
         return of(SUCCESS_LOGOUT);
@@ -57,7 +66,7 @@ public class UserController {
 
     @GetMapping("/profile")
     public ResponseEntity<HttpResponseDto> getUser(
-        @AuthenticationPrincipal UserDetailsImpl userDetails
+            @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         UserResponseDto response = userService.getUser(userDetails.getUser().getId());
         return of(USER_SUCCESS_GET, response);
@@ -65,7 +74,7 @@ public class UserController {
 
     @DeleteMapping("/withdraw")
     public ResponseEntity<HttpResponseDto> withdraw(
-        @AuthenticationPrincipal UserDetailsImpl userDetails
+            @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         userService.withdraw(userDetails.getUser());
         return of(USER_DELETE_SUCCESS);
@@ -73,7 +82,7 @@ public class UserController {
 
     @PutMapping("/resign/{userId}")
     public ResponseEntity<HttpResponseDto> resign(
-        @PathVariable("userId") Long userId
+            @PathVariable("userId") Long userId
     ) {
         userService.resign(userId);
         return of(USER_RESIGN_SUCCESS);
@@ -81,16 +90,31 @@ public class UserController {
 
     @PutMapping("/update")
     public ResponseEntity<HttpResponseDto> update(
-        @AuthenticationPrincipal UserDetailsImpl userDetails,
-        @RequestBody ProfileUpdateRequestDto updateDto
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestBody ProfileUpdateRequestDto updateDto
     ) {
         userService.update(userDetails.getUser(), updateDto);
         return of(USER_UPDATE_SUCCESS);
     }
 
     @GetMapping("/oauth/kakao")
-    public ResponseEntity<HttpResponseDto> kakaoLogin(@RequestParam String code)
+    public ResponseEntity<HttpResponseDto> kakaoLogin(@RequestParam String code, HttpServletResponse res)
             throws JsonProcessingException {
-        return of(SUCCESS_LOGIN, kakaoService.kakaoLogin(code));
+        return of(SUCCESS_LOGIN, kakaoService.kakaoLogin(code, res));
     }
+
+    @GetMapping("/list")
+    private ResponseEntity<HttpResponseDto> getUserAllList(
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        User user = userDetails.getUser();
+        List<UserResponseDto> responseDtos = userService.getUserAllList(user);
+        return ResponseUtils.of(USER_SUCCESS_LIST, responseDtos);
+    }
+
+    @GetMapping("/role")
+    public UserRoleDto getUserInfo(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+        log.info("user Role : {} ", userDetails.getUser().getUserRole());
+        return new UserRoleDto(userDetails.getUsername(), userDetails.getUser().getUserRole());
+    }
+
 }

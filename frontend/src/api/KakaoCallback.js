@@ -12,10 +12,12 @@ const KakaoCallback = ({ onLogin }) => {
       const handleKakaoLogin = async (code) => {
         try {
           const response = await axiosInstance.get(`/v1/users/oauth/kakao?code=${code}`);
-          const token = response.data.data;
-          localStorage.setItem('Authorization', token);
-          onLogin();
-          navigate('/itsmine', { replace: true });
+          const token = response.data.data;  // Get token from headers
+          if (token) {
+            localStorage.setItem('Authorization', token);
+            onLogin();
+            navigate('/itsmine', { replace: true });
+          }
         } catch (error) {
           console.error('Kakao Login failed:', error);
         }
@@ -23,7 +25,7 @@ const KakaoCallback = ({ onLogin }) => {
 
       handleKakaoLogin(code);
     }
-  }, [navigate, onLogin]); // Updated dependencies
+  }, [navigate, onLogin]);
 
   return (
       <div>

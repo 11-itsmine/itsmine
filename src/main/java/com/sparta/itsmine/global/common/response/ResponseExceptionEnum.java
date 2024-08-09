@@ -19,6 +19,7 @@ public enum ResponseExceptionEnum {
     FAIL_TO_CHANGE_ROLE(HttpStatus.BAD_REQUEST, "Role 변경을 실패했습니다."),
     UNAUTHORIZED_ACCESS(HttpStatus.UNAUTHORIZED, "인증되지 않은 사용자입니다."),
     USER_ERROR(HttpStatus.BAD_REQUEST, "유저 오류 발생"),
+    USER_BEN(HttpStatus.BAD_REQUEST, "벤당한 유저 입니다"),
 
 
     // 상품
@@ -40,7 +41,7 @@ public enum ResponseExceptionEnum {
     COMMENT_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "해당 문의사항에는 이미 댓글이 작성 되어 있습니다."),
 
     //경매
-    AUCTION_DENIED_BID(HttpStatus.BAD_REQUEST,"판매자 자신이 경매에 참여할 순 없습니다."),
+    AUCTION_DENIED_BID(HttpStatus.BAD_REQUEST, "판매자 자신이 경매에 참여할 순 없습니다."),
     AUCTION_IMPOSSIBLE_BID(HttpStatus.BAD_REQUEST,
             "상품의 입찰가보다 낮거나 즉시구매가보다 높은 입찰가입니다 입찰 금액을 확인해주세요."),
     AUCTION_NOT_FOUND(HttpStatus.NOT_FOUND, "입찰 기록을 찾을 수 없습니다."),
@@ -53,10 +54,17 @@ public enum ResponseExceptionEnum {
     CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅방이 없습니다."),
     CHAT_ROOM_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "이미 나간 유저 입니다."),
     CHAT_NOT_ONE_TO_ONE(HttpStatus.NOT_FOUND, "나간 유저가 존재하여 채팅이 불가능 합니다."),
-    CHAT_BLACKLIST_USER(HttpStatus.OK, "블랙 리스트에 등록된 유저 입니다."),
+    CHAT_BLACKLIST_USER(HttpStatus.NOT_FOUND, "블랙 리스트에 등록된 유저 입니다."),
+    CHAT_ROOM_SELF_CREATE(HttpStatus.NOT_FOUND, "혼자서 채팅방을 생성할수 없습니다."),
 
     // 상품 이미지
-    INVALID_URL_EXCEPTION(HttpStatus.OK,"유효하지 않은 URL 경로입니다. 올바른 URL 을 입력해주세요.");
+    INVALID_URL_EXCEPTION(HttpStatus.OK, "유효하지 않은 URL 경로입니다. 올바른 URL 을 입력해주세요."),
+    //신고
+    REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "신고가 존재하지 않습니다."),
+    REPORT_COMPLETE_STATUS(HttpStatus.BAD_REQUEST, "이미 처리한 신고 입니다."),
+    REPORT_MANAGER_STATUS(HttpStatus.BAD_REQUEST, "매니저가 아닙니다."),
+    REPORT_NOT_ROLE(HttpStatus.BAD_REQUEST, "권한이 없습니다"),
+    SELF_NOT_BLOCK(HttpStatus.BAD_REQUEST, "본인을 차단 할수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String message;

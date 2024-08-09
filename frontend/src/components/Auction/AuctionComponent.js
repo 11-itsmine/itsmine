@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { useNavigate, useParams } from "react-router-dom";
 import ChatWindow from "../chat/ChatWindow"; // ChatWindow 컴포넌트 가져오기
 import Modal from "../chat/Modal"; // Modal 컴포넌트 가져오기
+import ReportForm from "../backOffice/ReportForm"; // ReportForm 컴포넌트 가져오기
 
 const AuctionComponent = () => {
   const [product, setProduct] = useState(null);
@@ -14,6 +15,7 @@ const AuctionComponent = () => {
   const [isLiked, setIsLiked] = useState(false); // 좋아요 상태 초기화
   const [isChatOpen, setIsChatOpen] = useState(false); // 채팅 창 상태 추가
   const [chatRoomInfo, setChatRoomInfo] = useState(null); // 채팅방 정보 상태 추가
+  const [isReportOpen, setIsReportOpen] = useState(false); // 신고 모달 상태 추가
 
   const navigate = useNavigate();
   const { productId } = useParams();
@@ -68,6 +70,29 @@ const AuctionComponent = () => {
       alert("좋아요 변경에 실패했습니다. 다시 시도하세요.");
       setError("좋아요 변경에 실패했습니다. 다시 시도하세요.");
       console.error("Error toggling like status:", err);
+    }
+  };
+
+  // 신고를 처리하는 함수
+  const handleReport = async (reportData) => {
+    const token = localStorage.getItem("Authorization");
+
+    try {
+      const response = await axiosInstance.post(
+          `/v1/report`,
+          reportData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+      );
+
+      alert("신고가 접수되었습니다.");
+      setIsReportOpen(false);
+    } catch (err) {
+      alert("신고에 실패했습니다. 다시 시도하세요.");
+      console.error("Error reporting content:", err);
     }
   };
 
@@ -227,8 +252,12 @@ const AuctionComponent = () => {
           {error && <ErrorText>{error}</ErrorText>}
         </BidSection>
         <ChatButton onClick={handleStartChat}>채팅으로 문의하기</ChatButton>
+        <ReportButton onClick={() => setIsReportOpen(true)}>신고하기</ReportButton>
         <Modal isOpen={isChatOpen} onClose={toggleChatWindow}>
           {chatRoomInfo && <ChatWindow room={chatRoomInfo} onClose={toggleChatWindow} />}
+        </Modal>
+        <Modal isOpen={isReportOpen} onClose={() => setIsReportOpen(false)}>
+          <ReportForm onSubmit={handleReport} />
         </Modal>
       </Container>
   );
@@ -273,7 +302,7 @@ const Arrow = styled.div`
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background-color: transparent; /* 배경을 투명하게 설정 */
+  background-color: transparent;
   border-radius: 50%;
   width: 30px;
   height: 30px;
@@ -283,9 +312,9 @@ const Arrow = styled.div`
   cursor: pointer;
   font-size: 1.5rem;
   user-select: none;
-  color: #fff; /* 화살표 색상을 흰색으로 설정 */
+  color: #fff;
   &:hover {
-    background-color: rgba(255, 255, 255, 0.2); /* 호버 시 약간의 배경색 추가 */
+    background-color: rgba(255, 255, 255, 0.2);
   }
 
   ${({ left }) => (left ? `left: 10px;` : `right: 10px;`)}
@@ -313,7 +342,7 @@ const Details = styled.div`
   background-color: #fff;
   border-radius: 8px;
   margin-bottom: 10px;
-  position: relative; /* 좋아요 버튼 위치 설정을 위해 추가 */
+  position: relative;
 `;
 
 const Title = styled.div`
@@ -324,7 +353,7 @@ const Title = styled.div`
 
 const Description = styled.div`
   color: #666;
-  margin-top: 10px; /* 좋아요 버튼과 설명 사이의 간격 */
+  margin-top: 10px;
 `;
 
 const AdditionalInfo = styled.div`
@@ -445,3 +474,16 @@ const ChatButton = styled.button`
   }
 `;
 
+const ReportButton = styled.button`
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  &:hover {
+    background-color: #cc0000;
+  }
+`;

@@ -23,6 +23,7 @@ public class MessageListener {
 
     @RabbitListener(queues = DELAYED_QUEUE_NAME)
     public void receiveMessage(Long productId) {
+        log.error("productId : {} ", productId);
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 

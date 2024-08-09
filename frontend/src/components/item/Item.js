@@ -47,7 +47,7 @@ const Item = ({
   }, [productId]);
 
   const goToDetail = () => {
-    navigate(`/v1/products/${productId}`);
+    navigate(`/products/${productId}`);
   };
 
   const nextImage = (e) => {

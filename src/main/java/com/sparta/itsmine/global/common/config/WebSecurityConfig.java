@@ -1,16 +1,13 @@
 package com.sparta.itsmine.global.common.config;
 
-import com.sparta.itsmine.domain.social.kakao.service.KakaoService;
 import com.sparta.itsmine.global.security.JwtProvider;
 import com.sparta.itsmine.global.security.UserDetailsServiceImpl;
 import com.sparta.itsmine.global.security.filters.JwtAuthenticationFilter;
 import com.sparta.itsmine.global.security.filters.JwtAuthorizationFilter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -69,8 +66,8 @@ public class WebSecurityConfig {
 
         http.authorizeHttpRequests((authorizeHttpRequests) -> authorizeHttpRequests
                 .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
-                .requestMatchers(HttpMethod.POST, "/v1/users", "/v1/users/login", "/itsmine/**", "/v1/users/oauth/kakao/**").permitAll()
-
+                .requestMatchers(HttpMethod.POST, "/v1/users", "/v1/users/login", "/itsmine/**",
+                        "/v1/users/oauth/kakao/**").permitAll()
                 .requestMatchers(HttpMethod.PUT, "/v1/users/resign/*").permitAll()
                 .requestMatchers("/**").permitAll()
                 .anyRequest().authenticated()

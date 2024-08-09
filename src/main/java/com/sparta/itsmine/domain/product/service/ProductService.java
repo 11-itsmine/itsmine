@@ -41,6 +41,7 @@ public class ProductService {
     public ProductResponseDto createProduct(ProductCreateDto createDto,
             ProductImagesRequestDto imagesRequestDto, Long userId) {
         User user = adapter.findByIdAndDeletedAtIsNull(userId);
+        user.checkBlock();
         Category category = adapter.findCategoryByCategoryName(createDto.getCategoryName());
         adapter.existActiveProductByUserAndName(userId, createDto.getCategoryName());
 

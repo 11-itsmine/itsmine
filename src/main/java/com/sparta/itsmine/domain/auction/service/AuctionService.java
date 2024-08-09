@@ -67,7 +67,6 @@ public class AuctionService {
 				if (bidPrice.equals(product.getAuctionNowPrice())) {
 					successfulAuction(productId);
 					auction.updateStatus(SUCCESS_BID);
-					auctionRepository.save(auction);
 				} else {
 					scheduleMessage(productId, product.getDueDate());
 				}

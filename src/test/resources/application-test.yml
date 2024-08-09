@@ -13,7 +13,7 @@ spring:
 
   data:
     redis:
-      host: ${REDIS_DOMAIN} # 로컬에서 할 때는 localhost
+      host: localhost # ${REDIS_DOMAIN} # 로컬에서 할 때는 localhost
       port: ${REDIS_PORT}
 
   activemq:
@@ -44,17 +44,16 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-
-  properties:
-    hibernate:
-      ddl-auto: update
     properties:
       hibernate:
-        show_sql: true
-        format_sql: true
-        connection:
-          CharSet: utf-8
-          characterEncoding: utf-8
+        ddl-auto: update
+      properties:
+        hibernate:
+          show_sql: true
+          format_sql: true
+          connection:
+            CharSet: utf-8
+            characterEncoding: utf-8
           useUnicode: true
 
 

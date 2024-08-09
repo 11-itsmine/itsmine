@@ -1,18 +1,18 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Button,
   Container,
   FormControl,
   Grid,
-  IconButton,
   InputLabel,
   MenuItem,
   Select,
   TextField,
   Typography
 } from '@mui/material';
-import {useNavigate} from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Delete';
 import axiosInstance from "../../api/axiosInstance";
 
@@ -43,13 +43,14 @@ const ProductCreatePage = () => {
 
   const handleImageChange = async (event) => {
     const files = event.target.files;
-    if (!files.length) {
-      return;
-    }
+    if (!files.length) return;
 
+    const existingUrls = new Set(imageUrls);
     const formData = new FormData();
     Array.from(files).forEach((file) => {
-      formData.append('file', file);
+      if (!existingUrls.has(file.name)) {
+        formData.append('file', file);
+      }
     });
 
     try {
@@ -72,16 +73,41 @@ const ProductCreatePage = () => {
     setImageUrls(newImageUrls);
   };
 
+  const handleStartPriceChange = (e) => {
+    const value = Math.max(0, Number(e.target.value) || 0);
+    setStartPrice(value);
+  };
+
+  const handleAuctionNowPriceChange = (e) => {
+    const value = Math.max(0, Number(e.target.value) || 0);
+    setAuctionNowPrice(value);
+  };
+
+  const handleDueDateChange = (e) => {
+    const value = Math.max(0, Number(e.target.value) || 0);
+    const dueDate = new Date();
+    dueDate.setHours(dueDate.getHours() + value);
+    setDueDate(dueDate.toISOString());  // ISO 형식으로 서버에 전달
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // 기본 검증 로직 추가
+    if (!productName || !description || !auctionNowPrice || !startPrice || !dueDate || !categoryName) {
+      alert('모든 필드를 입력해주세요.');
+      return;
+    }
+
     try {
+      const token = localStorage.getItem('Authorization');
       const productData = {
         productCreateDto: {
           productName,
           description,
-          auctionNowPrice,
-          startPrice,
-          dueDate,
+          auctionNowPrice: Number(auctionNowPrice),
+          startPrice: Number(startPrice),
+          dueDate,  // 클라이언트에서 계산된 ISO 형식의 날짜를 전송
           categoryName
         },
         productImagesRequestDto: {
@@ -89,19 +115,23 @@ const ProductCreatePage = () => {
         }
       };
 
-      await axiosInstance.post('/v1/products', productData);
+      await axiosInstance.post(`/v1/products`, productData, {
+        headers: {
+          Authorization: token ? `Bearer ${token.trim()}` : '' // Authorization 헤더 추가
+        }
+      });
 
       alert('상품 등록이 완료 되었습니다.\n홈 화면으로 이동합니다.');
-      navigate('/itsmine'); // 상품 등록 후 홈 페이지로 이동
+      navigate('/itsmine');
     } catch (error) {
-      console.error('Error creating product:', error);
-      alert("상품 등록이 불가능합니다 해당 상품의 이름과 정보를 다시 한번 확인해주세요.");
+      console.error('Error creating product:', error.response ? error.response.data : error.message);
+      alert("상품 등록이 불가능합니다. 해당 상품의 이름과 정보를 다시 한번 확인해주세요.");
     }
   };
 
   return (
       <Container>
-        <Box component="form" onSubmit={handleSubmit} sx={{mt: 3}}>
+        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
           <Typography variant="h4" component="h1" gutterBottom>
             상품 등록
           </Typography>
@@ -109,12 +139,11 @@ const ProductCreatePage = () => {
             <Grid item xs={12}>
               <Button variant="contained" component="label">
                 이미지 업로드
-                <input type="file" hidden onChange={handleImageChange}
-                       multiple/>
+                <input type="file" hidden onChange={handleImageChange} multiple />
               </Button>
             </Grid>
             <Grid item xs={12}>
-              <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 2, mt: 2}}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 2 }}>
                 {imageUrls.map((url, index) => (
                     <Box key={index} sx={{
                       position: 'relative',
@@ -125,12 +154,12 @@ const ProductCreatePage = () => {
                         width: '100%',
                         height: '100%',
                         objectFit: 'cover'
-                      }}/>
+                      }} />
                       <IconButton
                           onClick={() => handleImageDelete(index)}
-                          sx={{position: 'absolute', top: 0, right: 0}}
+                          sx={{ position: 'absolute', top: 0, right: 0 }}
                       >
-                        <DeleteIcon/>
+                        <DeleteIcon />
                       </IconButton>
                     </Box>
                 ))}
@@ -162,7 +191,7 @@ const ProductCreatePage = () => {
                   label="즉시 구매가"
                   type="number"
                   value={auctionNowPrice}
-                  onChange={(e) => setAuctionNowPrice(e.target.value)}
+                  onChange={handleAuctionNowPriceChange}
                   required
               />
             </Grid>
@@ -172,7 +201,7 @@ const ProductCreatePage = () => {
                   label="시작 가격"
                   type="number"
                   value={startPrice}
-                  onChange={(e) => setStartPrice(e.target.value)}
+                  onChange={handleStartPriceChange}
                   required
               />
             </Grid>
@@ -181,8 +210,7 @@ const ProductCreatePage = () => {
                   fullWidth
                   label="경매 진행 시간 (시간 단위)"
                   type="number"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
+                  onChange={handleDueDateChange}
                   required
               />
             </Grid>
@@ -204,8 +232,7 @@ const ProductCreatePage = () => {
               </FormControl>
             </Grid>
             <Grid item xs={12}>
-              <Button type="submit" variant="contained" color="primary"
-                      fullWidth>
+              <Button type="submit" variant="contained" color="primary" fullWidth>
                 등록
               </Button>
             </Grid>

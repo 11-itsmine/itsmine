@@ -1,5 +1,8 @@
 package com.sparta.itsmine.domain.social.kakao.service;
 
+import static com.sparta.itsmine.global.security.JwtProvider.AUTHORIZATION_HEADER;
+import static jakarta.servlet.http.HttpServletResponse.SC_OK;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,6 +12,7 @@ import com.sparta.itsmine.domain.user.entity.User;
 import com.sparta.itsmine.domain.user.repository.UserRepository;
 import com.sparta.itsmine.domain.user.utils.UserRole;
 import com.sparta.itsmine.global.security.JwtProvider;
+import jakarta.servlet.http.HttpServletResponse;
 import java.net.URI;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +43,7 @@ public class KakaoService {
     @Autowired
     private RefreshTokenService refreshTokenService;
 
-    public String kakaoLogin(String code) throws JsonProcessingException {
+    public String kakaoLogin(String code, HttpServletResponse res) throws JsonProcessingException {
         // 1. "인가 코드"로 "액세스 토큰" 요청
         String tokens = getToken(code);
 
@@ -55,7 +59,12 @@ public class KakaoService {
         String accessToken = jwtProvider.createAccessToken(kakaoUser.getUsername(), kakaoUser.getUserRole());
         String refreshToken = jwtProvider.createRefreshToken(kakaoUser.getUsername(), kakaoUser.getUserRole());
 
+        res.setHeader(AUTHORIZATION_HEADER, accessToken);
         refreshTokenService.save(kakaoUser.getUsername(), refreshToken);
+
+        res.setStatus(SC_OK);
+        res.setCharacterEncoding("UTF-8");
+        res.setContentType("application/json");
 
         return accessToken;
     }

@@ -4,12 +4,20 @@ import com.sparta.itsmine.domain.images.entity.Images;
 import com.sparta.itsmine.domain.user.dto.ProfileUpdateRequestDto;
 import com.sparta.itsmine.domain.user.utils.UserRole;
 import com.sparta.itsmine.global.common.TimeStamp;
-import jakarta.persistence.*;
-
+import com.sparta.itsmine.global.common.response.ResponseExceptionEnum;
+import com.sparta.itsmine.global.exception.DataDuplicatedException;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
 import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -55,6 +63,10 @@ public class User extends TimeStamp {
 
     private LocalDateTime deletedAt;
 
+    private LocalDateTime blockedAt;
+
+    private String benReason;
+
     private Long kakaoId;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -79,7 +91,8 @@ public class User extends TimeStamp {
         this.kakaoId = kakaoId;
     }
 
-    public User(String username, String encodedPassword, String name, String nickname, String email, UserRole role, String address) {
+    public User(String username, String encodedPassword, String name, String nickname, String email,
+            UserRole role, String address) {
         this.username = username;
         this.password = encodedPassword;
         this.name = name;
@@ -120,5 +133,16 @@ public class User extends TimeStamp {
     public User kakaoIdUpdate(Long kakaoId) {
         this.kakaoId = kakaoId;
         return this;
+    }
+
+    public void block(LocalDateTime blockDate, String benReason) {
+        this.blockedAt = blockDate;
+        this.benReason = benReason;
+    }
+
+    public void checkBlock() {
+        if (blockedAt != null) {
+            throw new DataDuplicatedException(ResponseExceptionEnum.USER_BEN);
+        }
     }
 }

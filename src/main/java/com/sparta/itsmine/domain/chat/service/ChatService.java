@@ -2,7 +2,7 @@ package com.sparta.itsmine.domain.chat.service;
 
 import static com.sparta.itsmine.global.common.response.ResponseExceptionEnum.CHAT_BLACKLIST_USER;
 import static com.sparta.itsmine.global.common.response.ResponseExceptionEnum.CHAT_ROOM_NOT_FOUND;
-import static com.sparta.itsmine.global.common.response.ResponseExceptionEnum.USER_NOT_FOUND;
+import static com.sparta.itsmine.global.common.response.ResponseExceptionEnum.CHAT_ROOM_SELF_CREATE;
 
 import com.sparta.itsmine.domain.chat.dto.MessageRequestDto;
 import com.sparta.itsmine.domain.chat.dto.RoomInfoResponseDto;
@@ -13,7 +13,7 @@ import com.sparta.itsmine.domain.chat.entity.Message;
 import com.sparta.itsmine.domain.chat.repository.BlackListRepository;
 import com.sparta.itsmine.domain.chat.repository.ChatRoomRepository;
 import com.sparta.itsmine.domain.user.entity.User;
-import com.sparta.itsmine.domain.user.repository.UserRepository;
+import com.sparta.itsmine.domain.user.repository.UserAdapter;
 import com.sparta.itsmine.global.exception.DataDuplicatedException;
 import com.sparta.itsmine.global.exception.DataNotFoundException;
 import java.util.Comparator;
@@ -34,7 +34,7 @@ import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 public class ChatService {
 
     private final ChatRoomRepository chatRoomRepository;
-    private final UserRepository userRepository;
+    private final UserAdapter userAdapter;
     private final BlackListRepository blackListRepository;
     private final DynamoDbEnhancedClient dynamoDbEnhancedClient;
 
@@ -48,7 +48,7 @@ public class ChatService {
      * @param userId 인가된 본인 유저 정보
      */
     public List<RoomInfoResponseDto> findAllRoom(Long userId) {
-        log.info("user id : {}",userId);
+
         List<ChatRoom> chatRooms = chatRoomRepository.findAllByFromUserIdOrToUserId(userId);
         return chatRooms.stream()
                 .map(chatRoom -> new RoomInfoResponseDto(chatRoom, userId)) // userDetailId 추가
@@ -64,13 +64,19 @@ public class ChatService {
      * @param userId   다른 사람의 유저 Id
      */
     public RoomInfoResponseDto createChatRoom(User fromUser, Long userId) {
+        fromUser.checkBlock();
+        User toUser = userAdapter.findById(userId);
+        toUser.checkBlock();
         Optional<BlackList> blackList = blackListRepository.findByFromUserIdAndToUserId(
                 fromUser.getId(), userId);
         Optional<BlackList> toBlackList = blackListRepository.findByFromUserIdAndToUserId(
                 userId, fromUser.getId());
-        User toUser = getUser(userId);
+
         if (blackList.isPresent() || toBlackList.isPresent()) {
             throw new DataDuplicatedException(CHAT_BLACKLIST_USER);
+        }
+        if (fromUser.getId().equals(toUser.getId())) {
+            throw new DataDuplicatedException(CHAT_ROOM_SELF_CREATE);
         }
 
         ChatRoom chatRoom = new ChatRoom(fromUser, toUser);
@@ -79,7 +85,7 @@ public class ChatService {
 
         //chat_room,join_chat 테이블에 동시 저장
         chatRoomRepository.save(chatRoom);
-        return new RoomInfoResponseDto(chatRoom,fromUser.getId());
+        return new RoomInfoResponseDto(chatRoom, fromUser.getId());
     }
 
     /**
@@ -148,7 +154,7 @@ public class ChatService {
                 userId);
 
         if (CheckBlackList.isEmpty()) {
-            User toUser = getUser(userId);
+            User toUser = userAdapter.findById(userId);
             BlackList blackList = new BlackList(fromuser, toUser);
             blackListRepository.save(blackList);
             return true;
@@ -158,17 +164,6 @@ public class ChatService {
         }
     }
 
-    /**
-     * 유저 정보 있는지 확인
-     * <p>
-     *
-     * @param userId 유저 ID
-     */
-    public User getUser(Long userId) {
-        return userRepository.findById(userId).orElseThrow(
-                () -> new DataNotFoundException(USER_NOT_FOUND)
-        );
-    }
 
     /**
      * 채팅방 정보 있는지 확인
